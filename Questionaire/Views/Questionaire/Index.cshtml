@@ -1,0 +1,146 @@
+﻿@*@model IEnumerable<Questionaire.Models.Question>*@
+@model PagedList.IPagedList<Questionaire.Models.Question>
+@using PagedList.Mvc;
+
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+
+
+@using Questionaire.Models;
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Questionaire</h2>
+
+<table class="table">
+    <tr>
+        <th>
+            Question
+        </th>
+        <th>
+            Available From
+        </th>
+        <th>
+            Available To
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            <div class="row">
+                <div class="col-md-12">
+                    <h3>@Html.DisplayFor(modelItem => item.QuestionTitle)</h3>
+                </div>
+                @{ 
+                    UserAnswer answer = ((List<UserAnswer>)ViewBag.userAnswersOld).Find(a => a.QuestionID == item.QuestionID);
+                    var userAnswersOld = ViewBag.userAnswersOld;
+                    var selected = 0;
+                    var submitted = false;
+                    if (answer != null)
+                    {
+                        selected = answer.QuestionOptionID;
+                        submitted = item.QuestionID == answer.QuestionID && answer.IsFinalSubmission == true;
+                    }
+
+
+
+                        }
+                <input type="hidden" value="@item.QuestionID" name="QuestionID" id="QuestionID" />
+                <input type="hidden" value="@selected" name="QuestionOptionID" id="QuestionOptionID" />
+                @foreach (QuestionOption option in item.QuestionOptions)
+                {
+                    <div class="col-md-6 form-group">
+                    
+                    <input type="radio" name="@option.QuestionID" id="@option.QuestionOptionID" class="partialSubmit"  disabled="@submitted"  checked="@(option.QuestionOptionID == selected)" />
+                    <label for="@option.QuestionOptionID" >@option.QuestionOptionTitle</label>
+                    </div>
+                }
+
+
+
+            </div>
+
+
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.AvailableFrom)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.AvailableTo)
+        </td>
+        <td>
+            @*@Html.ActionLink("Edit", "Edit", new { id=item.QuestionID }) |
+            @Html.ActionLink("Details", "Details", new { id=item.QuestionID }) |
+            @Html.ActionLink("Delete", "Delete", new { id=item.QuestionID })*@
+        </td>
+    </tr>
+}
+
+</table>
+
+<input type="submit" value='@(Model.HasNextPage ? "Submit and Proceed" : "Final Submit")' id="submit" name="submit@(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber)" class="btn btn-success" />
+
+<br />
+Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) of @Model.PageCount
+
+
+
+@Html.PagedListPager(Model, page => Url.Action("Index", new { page, sortOrder = ViewBag.CurrentSort, currentFilter = ViewBag.CurrentFilter }))
+
+@section Scripts {
+    <script>
+        $("#submit").on("click", function () {
+            var finalpage=@(Model.HasNextPage?"false":"true");
+            if(!finalpage)
+            {
+                $(".partialSubmit:checked").each(function () {
+                    console.log($(this).attr("name"));
+                    Save($(this),true);
+
+                });
+                window.location.href = $("li.PagedList-skipToNext a").attr("href");
+            }else{
+                $(".partialSubmit:checked").each(function () {
+                    console.log($(this).attr("name"));
+                    Save($(this),true);
+
+                });
+            }
+        });
+        $(".partialSubmit").on("click", function () {
+            Save($(this),false);
+
+        });
+
+        function Save(elem,finalSubmission ){
+            $.ajax({
+                type: 'Post',
+                dataType: 'Json',
+                data: {
+                    UserName: '@User.Identity.Name',
+                    AnswerDate: '@DateTime.Now',
+                    QuestionID: elem.attr("name"),
+                    QuestionOptionID: elem.attr("id"),
+                    IsFinalSubmission:finalSubmission
+                },
+                url: '@Url.Action("SaveAnswer", "Questionaire")',
+                success: function (da) {
+                    if (da.Result == "Success") {
+                        //alert('saved sucessfully')
+
+
+                    } else {
+
+                        //alert('Error' + da.Message);
+                    }
+                },
+                error: function (da) {
+                    alert('Error');
+                }
+            });
+        }
+
+    </script>
+}

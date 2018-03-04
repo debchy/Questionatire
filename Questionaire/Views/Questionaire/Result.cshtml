@@ -1,0 +1,52 @@
+﻿@model IEnumerable<Questionaire.Models.UserAnswer>
+
+@{
+    ViewBag.Title = "Result";
+}
+
+<h2>Result</h2>
+
+
+<table class="table">
+    <tr>
+        <th>
+            Question
+        </th>
+        <th>
+            Answer
+        </th>
+        <th>
+            Correct Answer
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.AnswerDate)
+        </th>
+        
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Question.QuestionTitle)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.QuestionOption.QuestionOptionTitle)
+        </td>
+        <td>
+            @item.Question.QuestionOptions.Where(o => o.IsAnswer == true).SingleOrDefault()
+            @try { @item.Question.QuestionOptions.Where(o => o.IsAnswer == true).SingleOrDefault().QuestionOptionID}
+            catch { }
+
+            
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.AnswerDate)
+        </td>
+        <td>
+        </td>
+        
+    </tr>
+}
+
+</table>
